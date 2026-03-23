@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 个人网站生成器</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #333333;
+            --primary-light: #666666;
+            --primary-dark: #111111;
+            --success: #4a4a4a;
+            --warning: #888888;
+            --error: #333333;
+            --bg: #ffffff;
+            --bg-card: #fafafa;
+            --bg-input: #f5f5f5;
+            --text: #1a1a1a;
+            --text-muted: #888888;
+            --border: #e5e5e5;
+            --gradient: linear-gradient(180deg, #333333 0%, #666666 100%);
+            --glow: none;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(180deg, rgba(99, 102, 241, 0.1) 0%, transparent 100%);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: #333;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .logo h1 {
+            font-size: 1.25rem;
+            font-weight: 300;
+            color: #333;
+            letter-spacing: 2px;
+        }
+
+        .logo-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+            background: #333;
+            color: white;
+        }
+
+        .message-avatar.user {
+            background: #f5f5f5;
+            border: 1px solid #e5e5e5;
+            color: #333;
+        }
+
+        .message-content {
+            flex: 1;
+            max-width: calc(100% - 48px);
+        }
+
+        .message-bubble {
+            padding: 14px 18px;
+            border-radius: 4px;
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+
+        .message.ai .message-bubble {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+        }
+
+        .message.user .message-bubble {
+            background: #333;
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            color: var(--text);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .action-btn.primary {
+            background: var(--gradient);
+            border: none;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-input);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 14px 18px;
+            color: var(--text);
+            font-size: 0.95rem;
+            resize: none;
+            min-height: 52px;
+            max-height: 120px;
+            font-family: inherit;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .send-btn {
+            width: 52px;
+            height: 52px;
+            background: #333;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-btn:hover {
+            background: #111;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .preview-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-card);
+        }
+
+        .preview-title {
+            font-size: 1rem;
+            color: var(--text-muted);
+        }
+
+        .preview-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .preview-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+        }
+
+        .preview-btn.secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .preview-btn.secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .preview-btn.primary {
+            background: #333;
+            border: none;
+            color: white;
+        }
+
+        .preview-btn.primary:hover {
+            background: #111;
+        }
+
+        .preview-frame {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .preview-container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #e5e5e5;
+            min-height: 600px;
+        }
+
+        .preview-container iframe {
+            width: 100%;
+            height: 800px;
+            border: none;
+        }
+
+        .upload-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .upload-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .upload-modal-content {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid var(--border);
+            transform: scale(0.9);
+            transition: all 0.3s;
+        }
+
+        .upload-modal.active .upload-modal-content {
+            transform: scale(1);
+        }
+
+        .upload-modal h2 {
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+        }
+
+        .upload-modal p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .upload-area-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .upload-area h3 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .upload-area p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .upload-preview {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .upload-preview.active {
+            display: block;
+        }
+
+        .upload-preview img {
+            width: 120px;
+            height: 120px;
+            border-radius: 16px;
+            object-fit: cover;
+            border: 3px solid var(--primary);
+        }
+
+        .upload-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .upload-actions button {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .upload-actions .cancel {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .upload-actions .confirm {
+            background: var(--gradient);
+            border: none;
+            color: white;
+        }
+
+        .upload-actions .confirm:hover {
+            transform: translateY(-2px);
+        }
+
+        .progress-dots {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 16px;
+        }
+
+        .progress-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border);
+            transition: all 0.3s;
+        }
+
+        .progress-dot.active {
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .progress-dot.completed {
+            background: var(--success);
+        }
+
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 1fr;
+            }
+
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .typing {
+            display: flex;
+            gap: 4px;
+            padding: 14px 18px;
+        }
+
+        .typing span {
+            width: 8px;
+            height: 8px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: pulse 1.4s infinite;
+        }
+
+        .typing span:nth-child(2) { animation-delay: 0.2s; }
+        .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">·</div>
+                    <div>
+                        <h1>AI 网站生成器</h1>
+                        <p class="logo-subtitle">智能创建个人网站</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message ai">
+                        <div class="message-avatar ai">AI</div>
+                        <div class="message-content">
+                            <div class="message-bubble">
+                                你好！我是你的 AI 个人网站助手<br><br>
+                                我会通过对话的方式帮你创建个人网站。让我先了解一下你的基本信息吧！<br><br>
+                                首先，请告诉我你的<strong>姓名</strong>是什么？
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-dots" id="progressDots">
+                    <div class="progress-dot active" data-step="1"></div>
+                    <div class="progress-dot" data-step="2"></div>
+                    <div class="progress-dot" data-step="3"></div>
+                    <div class="progress-dot" data-step="4"></div>
+                    <div class="progress-dot" data-step="5"></div>
+                </div>
+
+                <div class="chat-input-area">
+                    <div class="input-wrapper">
+                        <textarea 
+                            class="chat-input" 
+                            id="chatInput"
+                            placeholder="在这里输入你的回答..."
+                            rows="1"
+                        ></textarea>
+                        <button class="send-btn" id="sendBtn">➤</button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="preview-header">
+                <span class="preview-title">实时预览</span>
+                <div class="preview-actions">
+                    <button class="preview-btn secondary" id="uploadImageBtn">
+                        上传图片
+                    </button>
+                    <button class="preview-btn primary" id="exportBtn">
+                        导出网站
+                    </button>
+                </div>
+            </div>
+            <div class="preview-frame">
+                <div class="preview-container">
+                    <iframe id="previewFrame" title="预览"></iframe>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="upload-modal" id="uploadModal">
+        <div class="upload-modal-content">
+            <h2>上传图片</h2>
+            <p id="uploadTitle">上传你的头像照片</p>
+            
+            <div class="upload-preview" id="uploadPreview">
+                <img id="previewImage" src="" alt="预览">
+            </div>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-area-icon">+</div>
+                <h3>点击或拖拽文件到这里</h3>
+                <p>支持 JPG、PNG 格式，建议尺寸 400x400</p>
+            </div>
+            
+            <input type="file" id="fileInput" accept="image/*" hidden>
+
+            <div class="upload-actions">
+                <button class="cancel" id="cancelUpload">取消</button>
+                <button class="confirm" id="confirmUpload">确认上传</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userData = {
+            name: '',
+            title: '',
+            bio: '',
+            email: '',
+            phone: '',
+            location: '',
+            school: '',
+            major: '',
+            hobbies: '',
+            skills: [],
+            projects: [],
+            experience: [],
+            avatar: '',
+            projectImages: []
+        };
+
+        let currentStep = 1;
+        let pendingImageType = 'avatar';
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const progressDots = document.querySelectorAll('.progress-dot');
+        const previewFrame = document.getElementById('previewFrame');
+        const uploadModal = document.getElementById('uploadModal');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewImage = document.getElementById('previewImage');
+        const uploadPreview = document.getElementById('uploadPreview');
+        const uploadTitle = document.getElementById('uploadTitle');
+
+        const questions = {
+            1: {
+                question: '首先，请告诉我你的<strong>姓名</strong>是什么？',
+                field: 'name',
+                next: 2
+            },
+            2: {
+                question: '很好！很高兴认识你，{name}！请问你的<strong>职业/头衔</strong>是什么？<br>比如：AI工程师、全栈开发者、产品经理等',
+                field: 'title',
+                next: 3
+            },
+            3: {
+                question: '请介绍一下你自己（<strong>个人简介</strong>）？<br>可以说说你的背景、专长、兴趣等',
+                field: 'bio',
+                next: 4
+            },
+            4: {
+                question: '请提供你的<strong>联系方式</strong>：<br>邮箱和电话（用逗号分隔）',
+                field: 'contact',
+                next: 5,
+                isContact: true
+            },
+            5: {
+                question: '你还有什么想补充的吗？比如：<br>教育背景、兴趣爱好、工作经历<br><br>或者直接说"没有了"进入下一步',
+                field: 'additional',
+                next: 'finish'
+            }
+        };
+
+        function updateProgress(step) {
+            progressDots.forEach((dot, index) => {
+                dot.classList.remove('active', 'completed');
+                if (index < step - 1) {
+                    dot.classList.add('completed');
+                } else if (index === step - 1) {
+                    dot.classList.add('active');
+                }
+            });
+        }
+
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+            messageDiv.innerHTML = `
+                <div class="message-avatar ${isUser ? 'user' : 'ai'}">${isUser ? 'U' : 'AI'}</div>
+                <div class="message-content">
+                    <div class="message-bubble">${content}</div>
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message ai';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `
+                <div class="message-avatar ai">AI</div>
+                <div class="message-content">
+                    <div class="message-bubble">
+                        <div class="typing">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        function askNextQuestion() {
+            if (currentStep > 5) {
+                addMessage(`太棒了！${userData.name}，我已经收集到你的基本信息了！<br><br>
+                    现在你可以：<br>
+                    <strong>上传图片</strong> - 添加头像和项目图片<br>
+                    <strong>继续补充</strong> - 告诉我更多关于你的技能和项目<br>
+                    <strong>导出网站</strong> - 下载完整的个人网站<br><br>
+                    你想先做什么？`);
+                
+                addMessageActions([
+                    { text: '上传头像', action: () => openUploadModal('avatar') },
+                    { text: '继续补充', action: () => askAboutSkills() },
+                    { text: '导出网站', action: () => exportWebsite() }
+                ]);
+                return;
+            }
+
+            const q = questions[currentStep];
+            let questionText = q.question.replace('{name}', userData.name || '');
+            
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage(questionText);
+                updateProgress(currentStep);
+            }, 800);
+        }
+
+        function addMessageActions(actions) {
+            const lastMessage = chatMessages.lastElementChild;
+            if (lastMessage) {
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'message-actions';
+                actions.forEach(action => {
+                    const btn = document.createElement('button');
+                    btn.className = 'action-btn';
+                    btn.textContent = action.text;
+                    btn.onclick = action.action;
+                    actionsDiv.appendChild(btn);
+                });
+                lastMessage.querySelector('.message-content').appendChild(actionsDiv);
+            }
+        }
+
+        function handleUserInput(input) {
+            const trimmed = input.trim();
+            if (!trimmed) return;
+
+            addMessage(trimmed, true);
+
+            const q = questions[currentStep];
+
+            if (q.isContact) {
+                const parts = trimmed.split(',').map(s => s.trim());
+                userData.email = parts[0] || '';
+                userData.phone = parts[1] || '';
+            } else if (q.field === 'name') {
+                userData.name = trimmed;
+            } else if (q.field === 'title') {
+                userData.title = trimmed;
+            } else if (q.field === 'bio') {
+                userData.bio = trimmed;
+            } else if (q.field === 'additional') {
+                if (!trimmed.includes('没有')) {
+                    userData.bio += '<br><br>' + trimmed;
+                }
+            }
+
+            currentStep = q.next === 'finish' ? 6 : q.next;
+            
+            setTimeout(() => {
+                askNextQuestion();
+            }, 500);
+
+            updatePreview();
+        }
+
+        function askAboutSkills() {
+            addMessage('好的，让我们来完善你的技能和项目经验！<br><br>请告诉我你的<strong>专业技能</strong>，比如：<br>Python, JavaScript, Machine Learning, Data Analysis 等（用逗号分隔）');
+            
+            setTimeout(() => {
+                addMessageActions([
+                    { text: '跳过', action: () => askAboutProjects() }
+                ]);
+            }, 500);
+
+            const originalHandle = handleUserInput;
+            window.handleSkillsInput = (input) => {
+                userData.skills = input.split(',').map(s => s.trim()).filter(s => s);
+                askAboutProjects();
+            };
+        }
+
+        function askAboutProjects() {
+            addMessage('很棒！现在来说说你的<strong>项目经验</strong>吧。<br><br>请按以下格式介绍你的项目：<br><strong>项目名称：</strong>xxx<br><strong>项目描述：</strong>xxx<br><strong>使用技术：</strong>xxx<br><br>或者直接说"没有项目"跳过');
+
+            window.handleProjectsInput = (input) => {
+                if (!input.includes('没有')) {
+                    userData.projects.push({
+                        name: '我的项目',
+                        description: input,
+                        tags: userData.skills.slice(0, 3)
+                    });
+                }
+                addMessage(`太棒了！你的个人网站已经基本完成了！<br><br>现在你可以：<br>
+                    <strong>上传图片</strong> - 添加头像和项目图片<br>
+                    <strong>导出网站</strong> - 下载完整的个人网站`);
+                
+                addMessageActions([
+                    { text: '上传头像', action: () => openUploadModal('avatar') },
+                    { text: '导出网站', action: () => exportWebsite() }
+                ]);
+                updatePreview();
+            };
+        }
+
+        function openUploadModal(type) {
+            pendingImageType = type;
+            uploadModal.classList.add('active');
+            uploadPreview.classList.remove('active');
+            fileInput.value = '';
+            
+            if (type === 'avatar') {
+                uploadTitle.textContent = '上传你的头像照片';
+            } else {
+                uploadTitle.textContent = '上传项目展示图片';
+            }
+        }
+
+        function closeUploadModal() {
+            uploadModal.classList.remove('active');
+        }
+
+        function handleFileSelect(file) {
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImage.src = e.target.result;
+                    uploadPreview.classList.add('active');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function confirmImageUpload() {
+            const imageSrc = previewImage.src;
+            if (imageSrc) {
+                if (pendingImageType === 'avatar') {
+                    userData.avatar = imageSrc;
+                    addMessage('头像上传成功！');
+                } else {
+                    userData.projectImages.push(imageSrc);
+                    addMessage('项目图片上传成功！');
+                }
+                updatePreview();
+            }
+            closeUploadModal();
+        }
+
+        function generateWebsite() {
+            const avatarContent = userData.avatar 
+                ? `<img src="${userData.avatar}" alt="头像" style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:1px solid #e5e5e5;">`
+                : `<div style="width:120px;height:120px;border-radius:50%;background:#f5f5f5;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:36px;border:1px solid #e5e5e5;color:#999;">?</div>`;
+
+            const skillsContent = userData.skills.length > 0 
+                ? userData.skills.map(skill => `<span class="skill-tag">${skill}</span>`).join('')
+                : '<p style="color:#999;">添加你的技能...</p>';
+
+            const projectsContent = userData.projects.length > 0
+                ? userData.projects.map((p, i) => {
+                    const img = userData.projectImages[i] || '';
+                    return `
+                        <div class="project-card">
+                            ${img ? `<img src="${img}" alt="${p.name}">` : ''}
+                            <div class="project-content">
+                                <h3>${p.name}</h3>
+                                <p>${p.description}</p>
+                                <div class="project-tags">
+                                    ${p.tags.map(t => `<span class="project-tag">${t}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')
+                : '<p style="text-align:center;color:#64748b;padding:40px;">暂无项目展示</p>';
+
+            return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${userData.name || '个人网站'} - ${userData.title || '个人主页'}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif; background: #ffffff; color: #1a1a1a; line-height: 1.6; min-height: 100vh; }
+        .container { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+        header { text-align: center; padding: 80px 0 60px; border-bottom: 1px solid #e5e5e5; }
+        .avatar { margin-bottom: 24px; }
+        header h1 { font-size: 2.5rem; font-weight: 300; margin-bottom: 12px; letter-spacing: 2px; }
+        .subtitle { font-size: 1rem; color: #666; margin-bottom: 24px; letter-spacing: 1px; }
+        .contact-info { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; font-size: 0.9rem; }
+        .contact-info span { color: #666; }
+        section { padding: 60px 0; border-bottom: 1px solid #e5e5e5; }
+        .section-title { text-align: center; font-size: 1.2rem; color: #333; margin-bottom: 40px; font-weight: 300; letter-spacing: 3px; text-transform: uppercase; }
+        .card { background: white; padding: 20px 0; }
+        .bio-text { font-size: 1rem; color: #444; white-space: pre-line; line-height: 1.8; }
+        .skills { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+        .skill-tag { padding: 6px 16px; background: #f5f5f5; color: #333; font-size: 0.85rem; }
+        .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px; }
+        .project-card { border: 1px solid #e5e5e5; }
+        .project-card img { width: 100%; height: 180px; object-fit: cover; }
+        .project-content { padding: 20px; }
+        .project-content h3 { font-size: 1rem; font-weight: 500; margin-bottom: 8px; }
+        .project-content p { font-size: 0.9rem; color: #666; margin-bottom: 12px; }
+        .project-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .project-tag { padding: 3px 10px; background: #f5f5f5; color: #666; font-size: 0.75rem; }
+        footer { text-align: center; padding: 40px; font-size: 0.85rem; color: #999; }
+        @media (max-width: 768px) { header h1 { font-size: 1.8rem; } .container { padding: 0 16px; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="avatar">${avatarContent}</div>
+            <h1>${userData.name || '你的名字'}</h1>
+            <p class="subtitle">${userData.title || '个人主页'}</p>
+            <div class="contact-info">
+                ${userData.email ? `<span>${userData.email}</span>` : ''}
+                ${userData.phone ? `<span>${userData.phone}</span>` : ''}
+            </div>
+        </div>
+    </header>
+    <section>
+        <div class="container">
+            <h2 class="section-title">关于我</h2>
+            <div class="card">
+                <p class="bio-text">${userData.bio || '介绍你自己...'}</p>
+            </div>
+        </div>
+    </section>
+    <section>
+        <div class="container">
+            <h2 class="section-title">专业技能</h2>
+            <div class="card">
+                <div class="skills">${skillsContent}</div>
+            </div>
+        </div>
+    </section>
+    <section>
+        <div class="container">
+            <h2 class="section-title">项目展示</h2>
+            <div class="projects-grid">${projectsContent}</div>
+        </div>
+    </section>
+    <footer>
+        <div class="container">
+            <p>© 2024 ${userData.name || '个人网站'}. All Rights Reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>`;
+        }
+
+        function updatePreview() {
+            const html = generateWebsite();
+            previewFrame.srcdoc = html;
+        }
+
+        function exportWebsite() {
+            const html = generateWebsite();
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${userData.name || '个人网站'}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            addMessage('网站已导出成功！<br>文件已下载到你的电脑上了。');
+        }
+
+        sendBtn.addEventListener('click', () => {
+            const input = chatInput.value;
+            chatInput.value = '';
+            
+            if (currentStep <= 5) {
+                handleUserInput(input);
+            } else if (window.handleSkillsInput) {
+                window.handleSkillsInput(input);
+            } else if (window.handleProjectsInput) {
+                window.handleProjectsInput(input);
+            }
+        });
+
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendBtn.click();
+            }
+        });
+
+        chatInput.addEventListener('input', () => {
+            chatInput.style.height = 'auto';
+            chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+        });
+
+        document.getElementById('uploadImageBtn').addEventListener('click', () => openUploadModal('avatar'));
+        document.getElementById('exportBtn').addEventListener('click', exportWebsite);
+        document.getElementById('cancelUpload').addEventListener('click', closeUploadModal);
+        document.getElementById('confirmUpload').addEventListener('click', confirmImageUpload);
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            handleFileSelect(file);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFileSelect(e.target.files[0]);
+        });
+
+        uploadModal.addEventListener('click', (e) => {
+            if (e.target === uploadModal) closeUploadModal();
+        });
+
+        updatePreview();
+    </script>
+</body>
+</html>
